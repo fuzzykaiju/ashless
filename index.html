@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ashless</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Ashless</h1>
+    <p class="tagline">Track cravings. Track smoking. Track progress.</p>
+  </header>
+
+  <div class="emoji-header entry">
+    <div class="entry-row">
+      <span data-tooltip="Date">📅</span>
+      <span data-tooltip="Cravings">😩</span>
+      <span data-tooltip="Smoked">🚬</span>
+      <span data-tooltip="Expense">💰</span>
+      <span data-tooltip="Notes">📋</span>
+      <span data-tooltip="Actions">⋮</span>
+    </div>
+  </div>
+
+  <main>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div id="menu" style="display:none;">
+      <button class="menu-item" onclick="exportCSV()">📤 Export CSV</button>
+      <button class="menu-item" onclick="openChartModal()">📊 View Chart</button>
+    </div>
+
+    <div id="entries"></div>
+
+    <div class="fab-container">
+      <button class="fab" onclick="openEntryModal()">➕</button>
+    </div>
+  </main>
+
+  <!-- Note Modal -->
+  <div id="noteModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeNoteModal()">&times;</span>
+      <h2>Note</h2>
+      <p id="noteText"></p>
+    </div>
+  </div>
+
+  <!-- Action Modal -->
+  <div id="actionModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeActionModal()">&times;</span>
+      <h2 id="actionDate">Entry:</h2>
+      <button onclick="triggerEdit()">✏️ Edit</button>
+      <button onclick="triggerDelete()">🗑️ Delete</button>
+    </div>
+  </div>
+
+  <!-- Add Entry Modal -->
+<div id="entryModal" class="modal">
+  <div class="modal-content entry-form">
+    <span class="close" onclick="closeEntryModal()">&times;</span>
+    <h2>New Entry</h2>
+
+    <div class="form-row inline">
+      <label for="date">Date:</label>
+      <input type="date" id="date" />
+      </button>
+    </div>
+
+    <div class="form-row inline">
+      <label for="cravings">Cravings:</label>
+      <input type="number" id="cravings" min="0" max="99" />
+    </div>
+
+    <div class="form-row inline">
+      <label for="smoked">Smoked:</label>
+      <input type="number" id="smoked" min="0" max="99" />
+    </div>
+
+    <div class="form-row inline">
+      <label for="note">Notes:</label>
+      <textarea id="note" rows="2"></textarea>
+    </div>
+
+    <button id="saveBtn" onclick="addEntry()">Save Entry</button>
+  </div>
+</div>
+
+  <!-- Chart Modal -->
+  <div id="chartModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeChartModal()">&times;</span>
+      <h2>Progress Chart</h2>
+      <label>Range:
+        <select id="range" onchange="drawChart()">
+          <option value="7">Past 1 Week</option>
+          <option value="30">Past 1 Month</option>
+          <option value="90">Past 3 Months</option>
+          <option value="180">Past 6 Months</option>
+          <option value="365">Past 1 Year</option>
+          <option value="730">Past 2 Years</option>
+          <option value="1095">Past 3 Years</option>
+          <option value="1825">Past 5 Years</option>
+          <option value="3650">Past 10 Years</option>
+          <option value="all">All Data</option>
+        </select>
+      </label>
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
