@@ -1,116 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ashless</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ashless - Quit Smoking Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Ashless</h1>
-    <p class="tagline">Track cravings. Track smoking. Track progress.</p>
-  </header>
+    <!-- Fixed Header -->
+    <header class="fixed-header">
+        <div class="header-content">
+            <div class="title-section">
+                <h1>Ashless</h1>
+                <p class="tagline">Track cravings. Track smoking.<br>Track progress.</p>
+            </div>
+            <button id="menuToggle" class="menu-btn" aria-label="Open menu">☰</button>
+        </div>
+        
+        <!-- Table Header -->
+        <div class="table-header">
+            <div class="header-cell" data-tooltip="Date">📆</div>
+            <div class="header-cell" data-tooltip="Cravings">😩</div>
+            <div class="header-cell" data-tooltip="Cigarettes Smoked">🚬</div>
+            <div class="header-cell" data-tooltip="Money Spent">💵</div>
+            <div class="header-cell" data-tooltip="Notes">📋</div>
+            <div class="header-cell" data-tooltip="Actions">⚙️</div>
+        </div>
+    </header>
 
-  <div class="emoji-header entry">
-    <div class="entry-row">
-      <span data-tooltip="Date">📅</span>
-      <span data-tooltip="Cravings">😩</span>
-      <span data-tooltip="Smoked">🚬</span>
-      <span data-tooltip="Expense">💰</span>
-      <span data-tooltip="Notes">📋</span>
-      <span data-tooltip="Actions">⋮</span>
+    <!-- Main Content -->
+    <main class="main-content">
+        <div id="entriesTable" class="entries-table">
+            <!-- Entries will be dynamically added here -->
+            <div class="empty-state">
+                <p>No entries yet. Tap the + button to add your first entry!</p>
+                <p class="price-info">💡 Each cigarette costs ₹<span id="currentPrice">20</span>. Track your savings!</p>
+            </div>
+        </div>
+        
+        <!-- Floating Add Button -->
+        <button id="addEntryBtn" class="add-entry-btn" aria-label="Add new entry">
+            <i class="fas fa-plus"></i>
+        </button>
+    </main>
+
+    <!-- Add/Edit Entry Modal -->
+    <div id="entryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Entry</h2>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+            <form id="entryForm">
+                <div class="form-group">
+                    <label for="entryDate">Date:</label>
+                    <input type="date" id="entryDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="cravings">Cravings:</label>
+                    <div class="number-input">
+                        <button type="button" class="number-btn minus" data-target="cravings">−</button>
+                        <input type="number" id="cravings" min="0" step="1" placeholder="0" required>
+                        <button type="button" class="number-btn plus" data-target="cravings">+</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="smoked">Cigarettes Smoked:</label>
+                    <div class="number-input">
+                        <button type="button" class="number-btn minus" data-target="smoked">−</button>
+                        <input type="number" id="smoked" min="0" step="1" placeholder="0" required>
+                        <button type="button" class="number-btn plus" data-target="smoked">+</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes (Optional):</label>
+                    <textarea id="notes" rows="3" placeholder="How are you feeling? Any triggers?"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" id="saveEntry" class="save-btn">Save Entry</button>
+                </div>
+                <div id="dateError" class="error-message" style="display: none;">
+                    An entry for this date already exists
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <main>
-    <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div id="menu" style="display:none;">
-      <button class="menu-item" onclick="exportCSV()">📤 Export CSV</button>
-      <button class="menu-item" onclick="openChartModal()">📊 View Chart</button>
+    <!-- Notes Modal -->
+    <div id="notesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Notes</h2>
+                <button class="close-btn close-notes">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="notesContent"></p>
+            </div>
+        </div>
     </div>
 
-    <div id="entries"></div>
-
-    <div class="fab-container">
-      <button class="fab" onclick="openEntryModal()">➕</button>
-    </div>
-  </main>
-
-  <!-- Note Modal -->
-  <div id="noteModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeNoteModal()">&times;</span>
-      <h2>Note</h2>
-      <p id="noteText"></p>
-    </div>
-  </div>
-
-  <!-- Action Modal -->
-  <div id="actionModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeActionModal()">&times;</span>
-      <h2 id="actionDate">Entry:</h2>
-      <button onclick="triggerEdit()">✏️ Edit</button>
-      <button onclick="triggerDelete()">🗑️ Delete</button>
-    </div>
-  </div>
-
-  <!-- Add Entry Modal -->
-<div id="entryModal" class="modal">
-  <div class="modal-content entry-form">
-    <span class="close" onclick="closeEntryModal()">&times;</span>
-    <h2>New Entry</h2>
-
-    <div class="form-row inline">
-      <label for="date">Date:</label>
-      <input type="date" id="date" />
-      </button>
+    <!-- Actions Modal -->
+    <div id="actionsModal" class="modal">
+        <div class="modal-content actions-modal">
+            <div class="modal-header">
+                <h2>Actions</h2>
+                <button class="close-btn close-actions">&times;</button>
+            </div>
+            <div class="modal-body actions-body">
+                <button id="editEntry" class="action-btn edit-btn">
+                    <span class="action-icon">📝</span>
+                    <span>Edit</span>
+                </button>
+                <button id="deleteEntry" class="action-btn delete-btn">
+                    <span class="action-icon">⛔</span>
+                    <span>Delete</span>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="form-row inline">
-      <label for="cravings">Cravings:</label>
-      <input type="number" id="cravings" min="0" max="99" />
+    <!-- Side Menu -->
+    <div id="sideMenu" class="side-menu">
+        <div class="menu-header">
+            <h3>Menu</h3>
+            <button id="closeMenu" class="close-btn">&times;</button>
+        </div>
+        <div class="menu-items">
+            <button id="importBtn" class="menu-item">
+                <span class="menu-icon">📥</span>
+                <span>Import CSV</span>
+            </button>
+            <button id="exportBtn" class="menu-item">
+                <span class="menu-icon">📤</span>
+                <span>Export CSV</span>
+            </button>
+            <button id="chartBtn" class="menu-item">
+                <span class="menu-icon">📊</span>
+                <span>Show Chart</span>
+            </button>
+            <button id="settingsBtn" class="menu-item">
+                <span class="menu-icon">⚙️</span>
+                <span>Settings</span>
+            </button>
+            <button id="aboutBtn" class="menu-item">
+                <span class="menu-icon">ℹ️</span>
+                <span>About</span>
+            </button>
+        </div>
+    </div>
+    <div id="menuOverlay" class="menu-overlay"></div>
+
+    <!-- Chart Modal -->
+    <div id="chartModal" class="modal">
+        <div class="modal-content chart-modal">
+            <div class="modal-header">
+                <h2>Progress Chart</h2>
+                <button class="close-btn close-chart">&times;</button>
+            </div>
+            <div class="modal-body chart-body">
+                <div class="chart-controls">
+                    <select id="timeRange" class="time-select">
+                        <option value="7">Past 1 Week</option>
+                        <option value="30">Past 1 Month</option>
+                        <option value="90">Past 3 Months</option>
+                        <option value="180">Past 6 Months</option>
+                        <option value="365">Past 1 Year</option>
+                        <option value="730">Past 2 Years</option>
+                        <option value="1825">Past 5 Years</option>
+                        <option value="3650">Past 10 Years</option>
+                    </select>
+                    <div class="toggle-buttons">
+                        <button id="toggleSmoked" class="toggle-btn active" data-type="smoked">
+                            <span class="toggle-dot smoked-dot"></span>
+                            Smoked
+                        </button>
+                        <button id="toggleCravings" class="toggle-btn active" data-type="cravings">
+                            <span class="toggle-dot cravings-dot"></span>
+                            Cravings
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+                <div class="chart-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Cigarettes:</span>
+                        <span id="totalSmoked" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Money Spent:</span>
+                        <span id="moneySpent" class="stat-value">₹0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="form-row inline">
-      <label for="smoked">Smoked:</label>
-      <input type="number" id="smoked" min="0" max="99" />
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>About Ashless</h2>
+                <button class="close-btn close-about">&times;</button>
+            </div>
+            <div class="modal-body about-body">
+                <p>Ashless is your personal quit smoking tracker designed to help you monitor your progress on your journey to becoming smoke-free.</p>
+                <h3>How it works:</h3>
+                <ul>
+                    <li>Track your daily cravings and cigarettes smoked</li>
+                    <li>Monitor money spent (custom price per cigarette)</li>
+                    <li>Add notes to track triggers and feelings</li>
+                    <li>Visualize your progress with charts</li>
+                </ul>
+                <h3>Tips for Success:</h3>
+                <ul>
+                    <li>Log every craving and cigarette</li>
+                    <li>Review your progress weekly</li>
+                    <li>Use notes to identify patterns</li>
+                    <li>Celebrate small victories!</li>
+                </ul>
+                <p class="motivation">"Every cigarette you don't smoke is a victory. Keep going!"</p>
+                <div class="version">Version 1.1 | Made with ❤️ for a smoke-free life</div>
+            </div>
+        </div>
     </div>
 
-    <div class="form-row inline">
-      <label for="note">Notes:</label>
-      <textarea id="note" rows="2"></textarea>
+    <!-- Import Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Import CSV</h2>
+                <button class="close-btn close-import">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="file" id="csvFile" accept=".csv" class="file-input">
+                <p class="help-text">CSV Format: Date (dd-mm-yy), Cravings, Smoked, Notes</p>
+                <button id="confirmImport" class="save-btn">Import Data</button>
+            </div>
+        </div>
     </div>
 
-    <button id="saveBtn" onclick="addEntry()">Save Entry</button>
-  </div>
-</div>
-
-  <!-- Chart Modal -->
-  <div id="chartModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeChartModal()">&times;</span>
-      <h2>Progress Chart</h2>
-      <label>Range:
-        <select id="range" onchange="drawChart()">
-          <option value="7">Past 1 Week</option>
-          <option value="30">Past 1 Month</option>
-          <option value="90">Past 3 Months</option>
-          <option value="180">Past 6 Months</option>
-          <option value="365">Past 1 Year</option>
-          <option value="730">Past 2 Years</option>
-          <option value="1095">Past 3 Years</option>
-          <option value="1825">Past 5 Years</option>
-          <option value="3650">Past 10 Years</option>
-          <option value="all">All Data</option>
-        </select>
-      </label>
-      <canvas id="chart"></canvas>
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-btn close-settings">&times;</button>
+            </div>
+            <div class="modal-body settings-body">
+                <div class="form-group">
+                    <label for="cigarettePrice">Price per cigarette (₹):</label>
+                    <input type="number" id="cigarettePrice" min="1" step="0.5" value="20">
+                    <p class="help-text">Default: ₹20 per cigarette. Changes apply to new entries.</p>
+                </div>
+                <div class="form-group">
+                    <label for="defaultProduct">Default tobacco product:</label>
+                    <select id="defaultProduct" class="time-select">
+                        <option value="cigarettes" selected>Cigarettes</option>
+                        <option value="cigars">Cigars</option>
+                        <option value="vape">Vape</option>
+                        <option value="chewing">Chewing Tobacco</option>
+                        <option value="hookah">Hookah</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button id="saveSettings" class="save-btn">Save Settings</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
