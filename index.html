@@ -36,7 +36,7 @@
             <!-- Entries will be dynamically added here -->
             <div class="empty-state">
                 <p>No entries yet. Tap the + button to add your first entry!</p>
-                <p class="price-info">💡 Each cigarette costs ₹<span id="currentPrice">20</span>. Track your savings!</p>
+                <p class="price-info">💡 The numbers don't lie, as long as you don't.</p>
             </div>
         </div>
         
@@ -174,11 +174,11 @@
                     <div class="toggle-buttons">
                         <button id="toggleSmoked" class="toggle-btn active" data-type="smoked">
                             <span class="toggle-dot smoked-dot"></span>
-                            Smoked
+                            <span class="toggle-text">Smoked</span>
                         </button>
                         <button id="toggleCravings" class="toggle-btn active" data-type="cravings">
                             <span class="toggle-dot cravings-dot"></span>
-                            Cravings
+                            <span class="toggle-text">Cravings</span>
                         </button>
                     </div>
                 </div>
@@ -223,7 +223,7 @@
                     <li>Celebrate small victories!</li>
                 </ul>
                 <p class="motivation">"Every cigarette you don't smoke is a victory. Keep going!"</p>
-                <div class="version">Version 1.1 | Made with ❤️ for a smoke-free life</div>
+                <div class="version">Version 1.0 | Made with ❤️ for a smoke-free life</div>
             </div>
         </div>
     </div>
@@ -252,9 +252,28 @@
             </div>
             <div class="modal-body settings-body">
                 <div class="form-group">
-                    <label for="cigarettePrice">Price per cigarette (₹):</label>
-                    <input type="number" id="cigarettePrice" min="1" step="0.5" value="20">
-                    <p class="help-text">Default: ₹20 per cigarette. Changes apply to new entries.</p>
+                    <label for="currency">Currency:</label>
+                    <select id="currency" class="time-select">
+                        <option value="₹">Indian Rupee (₹)</option>
+                        <option value="$">US Dollar ($)</option>
+                        <option value="€">Euro (€)</option>
+                        <option value="£">British Pound (£)</option>
+                        <option value="¥">Japanese Yen (¥)</option>
+                        <option value="₽">Russian Ruble (₽)</option>
+                        <option value="R$">Brazilian Real (R$)</option>
+                        <option value="A$">Australian Dollar (A$)</option>
+                        <option value="C$">Canadian Dollar (C$)</option>
+                        <option value="CHF">Swiss Franc (CHF)</option>
+                    </select>
+                    <p class="help-text">Currency cannot be changed after adding your first entry</p>
+                </div>
+                <div class="form-group">
+                    <label for="cigarettePrice">Price per cigarette:</label>
+                    <div class="currency-input">
+                        <span id="currencySymbol" class="currency-symbol">₹</span>
+                        <input type="number" id="cigarettePrice" min="0.1" step="0.1" value="20">
+                    </div>
+                    <p class="help-text">Set the actual cost of one cigarette (affects new entries only)</p>
                 </div>
                 <div class="form-group">
                     <label for="defaultProduct">Default tobacco product:</label>
@@ -264,6 +283,7 @@
                         <option value="vape">Vape</option>
                         <option value="chewing">Chewing Tobacco</option>
                         <option value="hookah">Hookah</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
                 <div class="form-actions">

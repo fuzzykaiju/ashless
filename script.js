@@ -7,6 +7,7 @@ class AshlessTracker {
         
         // Load settings
         this.settings = JSON.parse(localStorage.getItem('ashless_settings')) || {
+            currency: '₹',
             cigarettePrice: 20,
             defaultProduct: 'cigarettes'
         };
@@ -16,7 +17,7 @@ class AshlessTracker {
         this.loadEntries();
         this.setTodayDate();
         this.updateSettingsInputs();
-        this.updatePriceDisplay();
+        this.updateCurrencySymbol();
     }
     
     initializeElements() {
@@ -53,11 +54,10 @@ class AshlessTracker {
         this.dateError = document.getElementById('dateError');
         
         // Settings inputs
+        this.currencyInput = document.getElementById('currency');
         this.cigarettePriceInput = document.getElementById('cigarettePrice');
         this.defaultProductInput = document.getElementById('defaultProduct');
-        
-        // Price display
-        this.currentPriceDisplay = document.getElementById('currentPrice');
+        this.currencySymbolElement = document.getElementById('currencySymbol');
         
         // Chart elements
         this.timeRange = document.getElementById('timeRange');
@@ -108,6 +108,8 @@ class AshlessTracker {
         
         // Settings functionality
         this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
+        this.currencyInput.addEventListener('change', () => this.updateCurrencyPreview());
+        this.cigarettePriceInput.addEventListener('input', () => this.validatePriceInput());
         
         // Chart controls
         this.timeRange.addEventListener('change', () => this.updateChart());
@@ -116,6 +118,9 @@ class AshlessTracker {
         
         // Close modals on outside click
         window.addEventListener('click', (e) => this.handleOutsideClick(e));
+        
+        // Setup input listeners for form validation
+        this.setupInputListeners();
     }
     
     setTodayDate() {
@@ -257,6 +262,25 @@ class AshlessTracker {
         this.updateSettingsInputs();
         this.settingsModal.style.display = 'block';
         this.closeMenuFunc();
+        
+        // Disable currency selection if entries exist
+        if (this.entries.length > 0) {
+            this.currencyInput.disabled = true;
+            
+            // Add info message if not already present
+            const currencyLabel = document.querySelector('label[for="currency"]');
+            if (currencyLabel && !currencyLabel.querySelector('.currency-note')) {
+                const note = document.createElement('span');
+                note.className = 'currency-note';
+                note.textContent = ' (cannot be changed after adding entries)';
+                note.style.color = '#ff9900';
+                note.style.fontSize = '0.85em';
+                note.style.marginLeft = '5px';
+                currencyLabel.appendChild(note);
+            }
+        } else {
+            this.currencyInput.disabled = false;
+        }
     }
     
     closeSettingsModal() {
@@ -306,39 +330,60 @@ class AshlessTracker {
     }
     
     updateSettingsInputs() {
+        this.currencyInput.value = this.settings.currency;
         this.cigarettePriceInput.value = this.settings.cigarettePrice;
         this.defaultProductInput.value = this.settings.defaultProduct;
+        this.updateCurrencyPreview();
     }
     
-    updatePriceDisplay() {
-        if (this.currentPriceDisplay) {
-            this.currentPriceDisplay.textContent = this.settings.cigarettePrice;
+    updateCurrencyPreview() {
+        const selectedCurrency = this.currencyInput.value;
+        this.currencySymbolElement.textContent = selectedCurrency;
+    }
+    
+    updateCurrencySymbol() {
+        if (this.currencySymbolElement) {
+            this.currencySymbolElement.textContent = this.settings.currency;
+        }
+    }
+    
+    validatePriceInput() {
+        const price = parseFloat(this.cigarettePriceInput.value);
+        if (price < 0.1) {
+            this.cigarettePriceInput.value = '0.1';
         }
     }
     
     saveSettings() {
         const price = parseFloat(this.cigarettePriceInput.value);
-        if (isNaN(price) || price < 1) {
-            alert('Please enter a valid price (minimum ₹1)');
+        if (isNaN(price) || price < 0.1) {
+            alert('Please enter a valid price (minimum 0.1)');
             return;
         }
         
+        // Prevent currency change if entries exist
+        if (this.entries.length > 0 && this.settings.currency !== this.currencyInput.value) {
+            alert('Currency cannot be changed after adding entries. Please delete all entries first.');
+            this.currencyInput.value = this.settings.currency; // Reset to original
+            this.updateCurrencyPreview();
+            return;
+        }
+        
+        // Save settings
+        this.settings.currency = this.currencyInput.value;
         this.settings.cigarettePrice = price;
         this.settings.defaultProduct = this.defaultProductInput.value;
         
         localStorage.setItem('ashless_settings', JSON.stringify(this.settings));
-        this.updatePriceDisplay();
+        this.updateCurrencySymbol();
         this.closeSettingsModal();
         
-        // Reload entries to update money calculations
-        this.loadEntries();
-        
-        // If chart is open, update it
+        // Only update the chart if it's open
         if (this.chart) {
             this.updateChart();
         }
         
-        alert('Settings saved successfully!');
+        alert('Settings saved successfully! New entries will use these settings.');
     }
     
     saveEntry(event) {
@@ -349,16 +394,24 @@ class AshlessTracker {
         const smoked = parseInt(this.smokedInput.value) || 0;
         const notes = this.notesInput.value.trim();
         
-        // Use settings price for calculation
+        // Use current settings for NEW entries
         const entry = {
             date,
             cravings,
             smoked,
             notes,
-            money: smoked * this.settings.cigarettePrice
+            money: smoked * this.settings.cigarettePrice,
+            currency: this.settings.currency, // Store currency at time of entry
+            pricePerCigarette: this.settings.cigarettePrice // Store price at time of entry
         };
         
         if (this.editingIndex !== null) {
+            // When editing, use the ORIGINAL currency and price from that entry
+            const originalEntry = this.entries[this.editingIndex];
+            entry.money = smoked * originalEntry.pricePerCigarette;
+            entry.currency = originalEntry.currency;
+            entry.pricePerCigarette = originalEntry.pricePerCigarette;
+            
             // Update existing entry
             this.entries[this.editingIndex] = entry;
         } else {
@@ -398,7 +451,7 @@ class AshlessTracker {
             this.entriesTable.innerHTML = `
                 <div class="empty-state">
                     <p>No entries yet. Tap the + button to add your first entry!</p>
-                    <p class="price-info">💡 Each cigarette costs ₹${this.settings.cigarettePrice}. Track your savings!</p>
+                    <p class="price-info">💡 The numbers don't lie, as long as you don't.</p>
                 </div>
             `;
             return;
@@ -411,8 +464,9 @@ class AshlessTracker {
             // Parse the date into components
             const [day, month, year] = entry.date.split('-');
             
-            // Format money with Indian Rupee symbol
-            const moneyFormatted = `₹${entry.money}`;
+            // Format money with the ORIGINAL currency from the entry
+            const entryCurrency = entry.currency || this.settings.currency;
+            const moneyFormatted = `${entryCurrency}${entry.money.toFixed(2)}`;
             
             // Escape notes for HTML display
             const escapedNotes = entry.notes ? entry.notes.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n') : '';
@@ -450,7 +504,7 @@ class AshlessTracker {
             return;
         }
         
-        const headers = ['Date', 'Cravings', 'Cigarettes Smoked', 'Money Spent (₹)', 'Notes'];
+        const headers = ['Date', 'Cravings', 'Cigarettes Smoked', 'Money Spent', 'Currency', 'Price per Cigarette', 'Notes'];
         const csvRows = [headers.join(',')];
         
         this.entries.forEach(entry => {
@@ -459,6 +513,8 @@ class AshlessTracker {
                 entry.cravings,
                 entry.smoked,
                 entry.money,
+                entry.currency || this.settings.currency,
+                entry.pricePerCigarette || this.settings.cigarettePrice,
                 `"${(entry.notes || '').replace(/"/g, '""')}"`
             ];
             csvRows.push(row.join(','));
@@ -501,34 +557,53 @@ class AshlessTracker {
                 }
                 
                 const importedEntries = [];
+                const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
+                
+                // Check if CSV has old format (4 columns) or new format (7 columns)
+                const hasCurrency = headers.includes('currency') || headers.includes('price per cigarette');
                 
                 for (let i = 1; i < rows.length; i++) {
                     const cols = rows[i].split(',').map(col => col.trim());
                     
-                    // Handle quoted notes with commas
-                    if (cols.length > 5) {
-                        const lastCols = cols.slice(4).join(',');
-                        cols.splice(4, cols.length - 4, lastCols);
-                    }
-                    
                     if (cols.length >= 4) {
-                        const date = cols[0];
-                        const cravings = parseInt(cols[1]) || 0;
-                        const smoked = parseInt(cols[2]) || 0;
-                        const money = parseInt(cols[3]) || smoked * this.settings.cigarettePrice;
-                        const notes = cols[4] ? cols[4].replace(/^"|"$/g, '') : '';
+                        let date, cravings, smoked, money, currency, pricePerCigarette, notes;
+                        
+                        if (hasCurrency && cols.length >= 7) {
+                            // New format with currency and price
+                            [date, cravings, smoked, money, currency, pricePerCigarette, ...notesParts] = cols;
+                            notes = notesParts.join(','); // In case notes contain commas
+                        } else {
+                            // Old format - use current settings
+                            [date, cravings, smoked, money, ...notesParts] = cols;
+                            notes = notesParts.join(',');
+                            currency = this.settings.currency;
+                            pricePerCigarette = this.settings.cigarettePrice;
+                            
+                            // Try to parse money, if not valid, calculate it
+                            const parsedMoney = parseFloat(money);
+                            if (isNaN(parsedMoney)) {
+                                money = parseInt(smoked) * pricePerCigarette;
+                            } else {
+                                money = parsedMoney;
+                            }
+                        }
+                        
+                        // Clean up notes (remove quotes if present)
+                        notes = notes ? notes.replace(/^"|"$/g, '') : '';
                         
                         // Validate date format (DD-MM-YY)
                         if (!/^\d{2}-\d{2}-\d{2}$/.test(date)) {
-                            console.warn(`Skipping row ${i+1}: Invalid date format`);
+                            console.warn(`Skipping row ${i+1}: Invalid date format "${date}"`);
                             continue;
                         }
                         
                         importedEntries.push({
                             date,
-                            cravings,
-                            smoked,
-                            money,
+                            cravings: parseInt(cravings) || 0,
+                            smoked: parseInt(smoked) || 0,
+                            money: parseFloat(money) || 0,
+                            currency: currency || this.settings.currency,
+                            pricePerCigarette: parseFloat(pricePerCigarette) || this.settings.cigarettePrice,
                             notes
                         });
                     }
@@ -576,12 +651,18 @@ class AshlessTracker {
         const smokedData = filteredEntries.map(entry => entry.smoked);
         const cravingsData = filteredEntries.map(entry => entry.cravings);
         
-        // Calculate stats with current price
+        // Calculate stats
         const totalSmoked = smokedData.reduce((sum, val) => sum + val, 0);
-        const totalMoney = totalSmoked * this.settings.cigarettePrice;
+        
+        // For money spent, we need to convert all currencies to current currency
+        // But we don't have exchange rates, so we'll just sum the money values
+        // Note: This is inaccurate if currencies differ, but it's the best we can do
+        const totalMoney = filteredEntries.reduce((sum, entry) => sum + entry.money, 0);
         
         this.totalSmoked.textContent = totalSmoked;
-        this.moneySpent.textContent = `₹${totalMoney}`;
+        
+        // Use current currency symbol for chart display
+        this.moneySpent.textContent = `${this.settings.currency}${totalMoney.toFixed(2)}`;
         
         // Destroy existing chart
         if (this.chart) {
@@ -711,5 +792,4 @@ class AshlessTracker {
 // Initialize the tracker when page loads
 document.addEventListener('DOMContentLoaded', () => {
     window.tracker = new AshlessTracker();
-    tracker.setupInputListeners();
 });
