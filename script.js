@@ -42,6 +42,7 @@ class AshlessTracker {
         this.aboutModal = document.getElementById('aboutModal');
         this.importModal = document.getElementById('importModal');
         this.settingsModal = document.getElementById('settingsModal');
+        this.resetModal = document.getElementById('resetModal');
         this.sideMenu = document.getElementById('sideMenu');
         this.menuOverlay = document.getElementById('menuOverlay');
         
@@ -88,6 +89,9 @@ class AshlessTracker {
         document.querySelector('.close-about').addEventListener('click', () => this.closeAboutModal());
         document.querySelector('.close-import').addEventListener('click', () => this.closeImportModal());
         document.querySelector('.close-settings').addEventListener('click', () => this.closeSettingsModal());
+        document.querySelector('.close-reset').addEventListener('click', () => this.closeResetModal());
+        document.getElementById('cancelReset').addEventListener('click', () => this.closeResetModal());
+        document.getElementById('confirmReset').addEventListener('click', () => this.confirmReset());
         
         // Form submission
         this.entryForm.addEventListener('submit', (e) => this.saveEntry(e));
@@ -297,6 +301,7 @@ class AshlessTracker {
         if (event.target === this.aboutModal) this.closeAboutModal();
         if (event.target === this.importModal) this.closeImportModal();
         if (event.target === this.settingsModal) this.closeSettingsModal();
+        if (event.target === this.resetModal) this.closeResetModal();
     }
     
     adjustNumber(event) {
@@ -502,12 +507,15 @@ class AshlessTracker {
     
     resetAllData() {
         this.closeMenuFunc();
-        if (!confirm('⚠️ Reset ALL data?\n\nThis will permanently delete all your entries and settings. This cannot be undone.')) {
-            return;
-        }
-        if (!confirm('Are you absolutely sure? All your smoking history will be lost forever.')) {
-            return;
-        }
+        this.resetModal.style.display = 'block';
+    }
+
+    closeResetModal() {
+        this.resetModal.style.display = 'none';
+    }
+
+    confirmReset() {
+        this.closeResetModal();
         localStorage.removeItem('ashless_entries');
         localStorage.removeItem('ashless_settings');
         this.entries = [];
@@ -515,7 +523,6 @@ class AshlessTracker {
         this.loadEntries();
         this.updateSettingsInputs();
         this.updateCurrencySymbol();
-        alert('All data has been reset.');
     }
 
     exportCSV() {

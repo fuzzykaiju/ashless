@@ -664,14 +664,16 @@ body {
     border-bottom: none;
 }
 
-.reset-menu-item {
-    color: var(--danger-color);
-    border-top: 1px solid var(--medium-grey);
+.reset-menu-item,
+.reset-menu-item:last-child {
+    color: var(--danger-color) !important;
+    border-top: 2px solid rgba(244, 67, 54, 0.4);
     margin-top: 10px;
 }
 
-.reset-menu-item:hover {
-    background-color: rgba(244, 67, 54, 0.1);
+.reset-menu-item:hover,
+.reset-menu-item:active {
+    background-color: rgba(244, 67, 54, 0.15);
 }
 
 .menu-icon {

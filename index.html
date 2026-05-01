@@ -297,6 +297,24 @@
         </div>
     </div>
 
+    <!-- Reset Confirmation Modal -->
+    <div id="resetModal" class="modal">
+        <div class="modal-content actions-modal">
+            <div class="modal-header">
+                <h2 style="color: var(--danger-color);">⚠️ Reset All Data</h2>
+                <button class="close-btn close-reset">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px; text-align: center;">
+                <p style="margin-bottom: 12px; color: var(--text-primary);">This will permanently delete <strong>all entries and settings</strong>.</p>
+                <p style="margin-bottom: 24px; color: var(--text-secondary); font-size: 0.9rem;">This cannot be undone.</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button id="cancelReset" class="action-btn" style="flex: 1; justify-content: center;">Cancel</button>
+                    <button id="confirmReset" class="action-btn delete-btn" style="flex: 1; justify-content: center; border-color: var(--danger-color); color: var(--danger-color);">🗑️ Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
