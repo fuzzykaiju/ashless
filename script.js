@@ -30,6 +30,7 @@ class AshlessTracker {
         this.chartBtn = document.getElementById('chartBtn');
         this.aboutBtn = document.getElementById('aboutBtn');
         this.settingsBtn = document.getElementById('settingsBtn');
+        this.resetBtn = document.getElementById('resetBtn');
         this.confirmImport = document.getElementById('confirmImport');
         this.saveSettingsBtn = document.getElementById('saveSettings');
         
@@ -102,6 +103,7 @@ class AshlessTracker {
         this.chartBtn.addEventListener('click', () => this.openChartModal());
         this.aboutBtn.addEventListener('click', () => this.openAboutModal());
         this.settingsBtn.addEventListener('click', () => this.openSettingsModal());
+        this.resetBtn.addEventListener('click', () => this.resetAllData());
         
         // Import functionality
         this.confirmImport.addEventListener('click', () => this.importCSV());
@@ -498,6 +500,24 @@ class AshlessTracker {
         });
     }
     
+    resetAllData() {
+        this.closeMenuFunc();
+        if (!confirm('⚠️ Reset ALL data?\n\nThis will permanently delete all your entries and settings. This cannot be undone.')) {
+            return;
+        }
+        if (!confirm('Are you absolutely sure? All your smoking history will be lost forever.')) {
+            return;
+        }
+        localStorage.removeItem('ashless_entries');
+        localStorage.removeItem('ashless_settings');
+        this.entries = [];
+        this.settings = { currency: '₹', cigarettePrice: 20, defaultProduct: 'cigarettes' };
+        this.loadEntries();
+        this.updateSettingsInputs();
+        this.updateCurrencySymbol();
+        alert('All data has been reset.');
+    }
+
     exportCSV() {
         if (this.entries.length === 0) {
             alert('No data to export!');
